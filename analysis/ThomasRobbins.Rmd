@@ -9,6 +9,8 @@ Loading necessary packages from R Studio library:
 library(tidyverse)
 library(janitor)
 library(here)
+library(rwunderground)
+library(openmeteo)
 
 ```
 
@@ -27,7 +29,114 @@ Using scatter plot to visualize the locations of bikeshare trip starts:
 df1 |>
   ggplot(aes(x = start_lng, y = start_lat), color = rideable_type) + 
   labs(x = "Trip Start Longitude", y = "Trip Start Latitude") +
-  geom_point(aes(alpha = 0.1), size = 4)
+  geom_point(aes(alpha = 0.1), size = 2)
 
 ```
+Creating df2 for analysis of ridership over time:
+```{r}
+
+df2 = df1 |> 
+  pivot_longer(
+    cols = c(started_at, ended_at),
+    names_to = "start_end",
+    values_to = "t") |> 
+  arrange(t) |> 
+  mutate(rider_delta=(start_end == "started_at")*2-1) |> 
+  mutate(riders=cumsum(rider_delta)) |> 
+  relocate(t,start_end,riders, .after = rideable_type)
+
+```
+
+
+Ridership over time in September 2023:
+```{r}
+
+df2 |> 
+  ggplot(aes(t,riders)) +
+  geom_line() +
+  ggtitle("Riders in September")
+
+```
+
+Ridership over time for a single example date (Sept 18):
+```{r}
+
+df2 |> 
+  filter(day(t)==18) |> 
+  ggplot(aes(t,riders)) +
+  geom_line() +
+  ggtitle("Riders on Sept 18th")
+
+```
+
+
+```{r}
+
+df2 |> 
+  filter(month(t)==9) |> 
+  ggplot(aes(t,riders)) +
+  geom_line() +
+  facet_wrap(~mday(t), scales = "free_x", ncol = 7) +
+  ggtitle("Riders by day-of-month for September 2023")
+
+```
+
+
+Looking at differences between weekdays:
+```{r}
+
+df2 |> 
+  filter(month(t)==9) |> 
+  mutate(epi=epiweek(t),wd=wday(t,label=TRUE,week_start = 7)) |> 
+  ggplot(aes(hms::as_hms(t),riders,color = as.factor(epi))) +
+  geom_line(alpha = 0.7) +
+  facet_wrap(~wd, scales = "free_x", ncol = 7) +
+  ggtitle("Ridership over time, by weekday, for Sept 2023")
+
+```
+
+
+Electric bikes vs classic bikes:
+```{r}
+
+df3 = df2 |> 
+  mutate(type_riders = cumsum(rider_delta), .by = rideable_type) |> 
+  relocate(type_riders, .after = riders)
+
+df3 |> 
+  filter(month(t) == 9) |> 
+  ggplot(aes(t, type_riders, color = rideable_type)) +
+  geom_line() + facet_wrap(~mday(t), scales = "free_x", ncol = 7)
+
+```
+
+
+Pulling September weather data from R package library:
+```{r}
+
+#weather_forecast("Washington",
+#hourly = c("temperature_2m","precipitation"),
+#response_units = list(
+#  temperature_unit = "fahrenheit",
+#  precipitation_unit = "inch"))
+
+df_4 = weather_history("Washington",
+start = "2023-09-01",
+end = "2023-09-30",
+hourly = c("apparent_temperature",
+           "wind_speed_10m",
+           "precipitation",
+           "rain"))
+
+```
+
+
+
+
+
+
+
+
+
+
 
