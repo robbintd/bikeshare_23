@@ -11,6 +11,7 @@ library(janitor)
 library(here)
 library(rwunderground)
 library(openmeteo)
+library(plotly)
 ```
 
 
@@ -83,14 +84,37 @@ df_w=weather_history("Washington",
 ```
 
 ```{r}
-df_j=df_s %>% 
-  left_join(df_w,by=join_by(closest(t>=datetime)))  %>%
-  relocate(datetime, .after=t)
- 
-head(df_j)
 
-df_j$t[1:5]
-df_j$datetime[1:5]
+df2c=df2 %>% mutate(t=force_tz(t,tzone="America/New_York")) #corrected
+ 
+#df_s2=df2c %>% slice_sample(n=1000)
+ 
+dfc=df2c %>% 
+  left_join(df_w,by=join_by(closest(t>=datetime)))  %>%
+  relocate(datetime, .after=t) |>
+  rename(atemp=hourly_apparent_temperature,
+         wind=hourly_wind_speed_10m,
+         precipitation=hourly_precipitation)
+
+head(dfc)
 ```
 
+```{r}
+df_r=dfc |>
+  mutate(t_f=floor_date(t,"10 mins")) %>%
+  relocate(t_f,.after=t) %>%
+  slice_head(n=1,by=t_f)
+
+
+p2=df_r |>
+  ggplot(aes(t,riders, color=precipitation>1)) +
+  geom_point()
+
+p2
+```
+
+
+```{r}
+plotly::ggplot(p2)
+```
 
