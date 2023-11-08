@@ -9,6 +9,8 @@ output: html_notebook
 library(tidyverse)
 library(janitor)
 library(here)
+library(rwunderground)
+library(openmeteo)
 ```
 
 
@@ -19,9 +21,76 @@ df1=read_csv(thisfile) %>% clean_names()
 ```
 
 ```{r}
-df1 |>
-  #slice_head(n=100) |>
-  ggplot(aes(start_lng,start_lat)) +
-  geom_point()
+df2s=df1 %>% 
+  select(rideable_type,member_casual,
+                    contains("start"),ride_id) %>% 
+  mutate(start_stop="start") %>%
+  rename(t=started_at,
+         station_name=start_station_name,
+         station_id=start_station_id,
+         lat=start_lat,
+         lng=start_lng)
+df2e=df1 %>% 
+  select(ride_id,rideable_type,member_casual,
+                    contains("end")) %>%
+  mutate(start_stop="stop") %>%
+  rename(t=ended_at,
+         station_name=end_station_name,
+         station_id=end_station_id,
+         lat=end_lat,
+         lng=end_lng)
+ 
+df2=bind_rows(df2s,df2e) %>%
+  arrange(t) %>%
+  mutate(rider_delta=(start_stop=="start")*2-1) %>% #change in ridership 
+  mutate(riders=cumsum(rider_delta)) %>%
+  relocate(riders,.after=t)
 ```
+
+```{r}
+df2 %>% 
+  ggplot(aes(t,riders)) +
+  geom_line()
+```
+
+```{r}
+df_r=df2 |>
+  mutate(t_f=floor_date(t,"10 mins")) %>%
+  relocate(t_f,.after=t) %>%
+  slice_head(n=1,by=t_f)
+```
+
+
+```{r}
+p1=df2 %>% 
+  filter(day(t)==18) %>%
+  ggplot(aes(t,riders)) +
+  geom_line() +
+  ggtitle("Riders on 18Sep")
+p1+
+  geom_line(data=df_r %>% filter(day(t)==18),
+  color="red")
+```
+
+```{r}
+df_w=weather_history("Washington",
+                    start = "2023-09-01",
+                    end = "2023-09-30",
+                    hourly = c("apparent_temperature",
+                               "wind_speed_10m",
+                               "precipitation")
+)
+```
+
+```{r}
+df_j=df_s %>% 
+  left_join(df_w,by=join_by(closest(t>=datetime)))  %>%
+  relocate(datetime, .after=t)
+ 
+head(df_j)
+
+df_j$t[1:5]
+df_j$datetime[1:5]
+```
+
 
