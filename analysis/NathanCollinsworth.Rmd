@@ -111,10 +111,30 @@ p2=df_r |>
   geom_point()
 
 p2
+plotly::ggplotly(p2)
 ```
 
 
 ```{r}
-plotly::ggplot(p2)
+p3=dfc |>
+  filter(day(t) == 23) |>
+  ggplot(aes(t,riders, color=precipitation>1, shape=rideable_type)) +
+  geom_point()
+
+p3
+plotly::ggplotly(p3)
+```
+
+```{r}
+df1d = df1 |>
+  mutate(ride_time = ended_at - started_at) |>
+  filter(ride_time > 30) |>
+  filter(ride_time < 7200) # 2 hours
+  #filter(ride_time < 10800) # 3 hours
+  #filter(ride_time < 86400) # one day
+
+df1d |>
+  ggplot(aes(ride_time)) +
+  geom_histogram()
 ```
 
