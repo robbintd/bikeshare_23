@@ -127,14 +127,50 @@ plotly::ggplotly(p3)
 
 ```{r}
 df1d = df1 |>
-  mutate(ride_time = ended_at - started_at) |>
+  mutate(ride_time = ended_at - started_at)
+df1df = df1d |>
   filter(ride_time > 30) |>
   filter(ride_time < 7200) # 2 hours
   #filter(ride_time < 10800) # 3 hours
   #filter(ride_time < 86400) # one day
 
-df1d |>
+df1df |>
   ggplot(aes(ride_time)) +
   geom_histogram()
+```
+
+
+
+```{r}
+#filter by ride_time > 0
+dfb = df1d |>
+  filter(ride_time >= 0)
+#create dataframe containing stations and the number of rides that STARTED at that station
+dfstarts = dfb |>
+  group_by(start_station_id) |>
+  summarise(sum_start = n())
+#create dataframe containing stations and the number of rides that ENDED at that station
+dfends = dfb |>
+  group_by(end_station_id) |>
+  summarise(sum_end = n())
+
+#join started and ended together and get the difference
+dfstation = dfstarts |>
+  full_join(dfends, by=join_by(start_station_id == end_station_id)) |>
+  mutate(difference = sum_end - sum_start)
+
+p4 = dfstation |> 
+  drop_na() |>
+  ggplot(aes(sum_start,sum_end)) +
+  geom_point()
+
+p5 = dfstation |> 
+  drop_na() |>
+  ggplot(aes(difference)) +
+  geom_histogram(binwidth = 10)
+
+p4
+p5
+
 ```
 
