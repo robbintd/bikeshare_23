@@ -1,0 +1,15 @@
+---
+title: "metro_bikeshare_final"
+author: "Thomas Robbins"
+date: "2023-11-29"
+output: html_document
+---
+
+This Rmd file will be used for the Analytics Alchemists' final DS241 project.
+
+```{r}
+
+# ... 
+
+```
+
