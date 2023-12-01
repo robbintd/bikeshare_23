@@ -22,6 +22,13 @@ df1=read_csv(thisfile) %>% clean_names()
 ```
 
 ```{r}
+thisfile=here("data_raw","Metro_Station_Entrances_in_DC.csv")
+
+dfM=read_csv(thisfile) |> clean_names()
+```
+
+
+```{r}
 df2s=df1 %>% 
   select(rideable_type,member_casual,
                     contains("start"),ride_id) %>% 
@@ -173,4 +180,3 @@ p4
 p5
 
 ```
-
