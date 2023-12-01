@@ -9,7 +9,35 @@ This Rmd file will be used for the Analytics Alchemists' final DS241 project.
 
 ```{r}
 
-# ... 
+library(tidyverse)
+library(janitor)
+library(here)
+library(rwunderground)
+library(openmeteo)
+
+```
+
+Loading 2023 bikeshare ridership data (with lat/long location info):
+
+```{r}
+
+# Need to replace this data with bikeshare data for which the lat/long data isn't rounded to 2 decimals (1 km resolution):
+
+thisfile=here("data_raw", "202309-capitalbikeshare-tripdata.zip")
+
+df1=read_csv(thisfile) %>% clean_names()
+
+```
+
+Loading 2023 metro station information (with lat/long location info):
+
+```{r}
+
+# May need to replace this data with metro entrances/exits, because one metro station may have multiple exits far apart.
+
+thisfile=here("data_raw", "Metro_Stations_Regional.csv")
+
+df2=read_csv(thisfile) %>% clean_names()
 
 ```
 
