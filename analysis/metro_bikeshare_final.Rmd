@@ -98,18 +98,10 @@ df_cleaned_with_distance <- df_cleaned %>%
 
 ```
 
-Trimming data to fewer points for efficient visualization:
-```{r}
-
-# df_bikemetro_dist_clip = df_cleaned_with_distance |> 
-  
-
-```
-
 Plotting ridership vs distance to metro:
 ```{r}
 
-ggplot(df_bikemetro_dist_clip, aes(x = dist_to_metro, y = total_ridership))+
+ggplot(df_cleaned_with_distance, aes(x = dist_to_metro, y = total_ridership))+
     geom_point(alpha = 0.05, color = "#074650", size = 0.75) +
     geom_smooth(method = "loess", se = FALSE,
                 color = "limegreen", linewidth = 1.5) +  
