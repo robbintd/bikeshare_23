@@ -13,12 +13,13 @@ library(here)
 library(rwunderground)
 library(openmeteo)
 library(ggplot2)
-library(read)
+library(geosphere)
+#library(read)
 ```
 
 
 ```{r}
-thisfile=here("data_raw", "202305-capitalbikeshare-tripdata.csv")
+thisfile=here("data_raw", "202305-capitalbikeshare-tripdata.zip")
 
 df1=read_csv(thisfile) %>% clean_names()
 ```
@@ -47,13 +48,14 @@ df2 <- bind_rows(df2s, df2e) %>%
   mutate(rider_delta = (start_stop == "start") * 2 - 1) %>% # change in ridership 
   mutate(riders = cumsum(rider_delta)) %>%
   relocate(riders, .after = t)
+
 ```
 
 ```{r}
 # Create a dataframe with total ridership, lat, lng for unique station IDs
 df_total_ridership <- df2 %>%
   group_by(station_id, lat, lng) %>%
-  summarize(total_ridership = max(riders)) %>%
+  summarise(total_ridership = max(riders)) %>%
   ungroup()
 
 ```
@@ -96,14 +98,26 @@ df_cleaned_with_distance <- df_cleaned %>%
 
 ```
 
+Trimming data to fewer points for efficient visualization:
 ```{r}
 
+# df_bikemetro_dist_clip = df_cleaned_with_distance |> 
+  
 
-ggplot(df_cleaned_with_distance, aes(x = dist_to_metro, y = total_ridership)) +
-  geom_smooth(method = "loess", se = FALSE, color = "blue") +  
+```
+
+Plotting ridership vs distance to metro:
+```{r}
+
+ggplot(df_bikemetro_dist_clip, aes(x = dist_to_metro, y = total_ridership))+
+    geom_point(alpha = 0.05, color = "#074650", size = 0.75) +
+    geom_smooth(method = "loess", se = FALSE,
+                color = "limegreen", linewidth = 1.5) +  
   labs(title = "Relationship between Ridership and Distance to Metro",
        x = "Distance to Metro (miles)",
        y = "Total Ridership" ) +
+  xlim(0,25) +
+  ylim(0,150000)
   theme_minimal()
 
 ```
