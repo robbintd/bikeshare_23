@@ -1,0 +1,112 @@
+---
+title: "May 2023 bikeshare"
+author: "Nathan Collinsworth, Bryce Butler, Thomas Robbins, Eric Fingar "
+output: html_notebook
+---
+
+
+
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(here)
+library(rwunderground)
+library(openmeteo)
+library(ggplot2)
+```
+
+
+```{r}
+thisfile=here("data_raw", "202305-capitalbikeshare-tripdata.csv")
+
+df1=read_csv(thisfile) %>% clean_names()
+```
+
+```{r}
+thisfile=here("data_raw","Metro_Station_Entrances_in_DC.csv")
+
+dfM=read_csv(thisfile) |> clean_names()
+```
+
+
+```{r}
+# Combine start and end data
+df2s <- df1 %>%
+  select(rideable_type, member_casual, contains("start"), ride_id) %>% 
+  mutate(start_stop = "start") %>%
+  rename(t = started_at, station_name = start_station_name, station_id = start_station_id, lat = start_lat, lng = start_lng)
+
+df2e <- df1 %>%
+  select(ride_id, rideable_type, member_casual, contains("end")) %>%
+  mutate(start_stop = "stop") %>%
+  rename(t = ended_at, station_name = end_station_name, station_id = end_station_id, lat = end_lat, lng = end_lng)
+
+df2 <- bind_rows(df2s, df2e) %>%
+  arrange(t) %>%
+  mutate(rider_delta = (start_stop == "start") * 2 - 1) %>% # change in ridership 
+  mutate(riders = cumsum(rider_delta)) %>%
+  relocate(riders, .after = t)
+```
+
+```{r}
+# Create a dataframe with total ridership, lat, lng for unique station IDs
+df_total_ridership <- df2 %>%
+  group_by(station_id, lat, lng) %>%
+  summarize(total_ridership = max(riders)) %>%
+  ungroup()
+
+```
+
+```{r}
+
+# Create a new dataframe with only lat and long columns
+df_metro_coordinates <- data.frame(lat = dfM$y, lng = dfM$x)
+
+```
+
+```{r}
+
+# Create df_cleaned with total_ridership, latbike, and lngbike
+df_cleaned <- df_total_ridership %>%
+  group_by(station_id) %>%
+  summarise(
+    total_ridership = sum(total_ridership),
+    latbike = first(lat),  # Assuming lat and lng are the original columns
+    lngbike = first(lng)   # Adjust if your columns are named differently
+  )
+
+# Add metro station coordinates with swapped column names
+df_cleaned <- merge(
+  df_cleaned,
+  df_metro_coordinates %>% select(lat, lng) %>% rename(latmetro = lat, lngmetro = lng),
+  by = character(),
+  all.x = TRUE
+)
+
+```
+
+```{r}
+# Assuming df_cleaned has the columns "latbike", "lngbike", "latmetro", "lngmetro"
+df_cleaned_with_distance <- df_cleaned %>%
+  rowwise() %>%
+  mutate(
+    dist_to_metro = distHaversine(c(lngbike, latbike), c(lngmetro, latmetro)) / 1609.344
+  )
+
+```
+
+```{r}
+
+
+ggplot(df_cleaned_with_distance, aes(x = dist_to_metro, y = total_ridership)) +
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +  
+  labs(title = "Relationship between Ridership and Distance to Metro",
+       x = "Distance to Metro (miles)",
+       y = "Total Ridership" ) +
+  theme_minimal()
+
+```
+
+
+
