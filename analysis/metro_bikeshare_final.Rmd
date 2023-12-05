@@ -1,7 +1,7 @@
 ---
 title: "metro_bikeshare_final"
-author: "Thomas Robbins, Eric Fingar"
-date: "2023-11-29"
+author: "Nathan Collinsworth, Bryce Butler, Thomas Robbins, Eric Fingar"
+date: "2023-12-5"
 output: html_document
 ---
 
@@ -14,6 +14,7 @@ library(rwunderground)
 library(openmeteo)
 library(ggplot2)
 library(geosphere)
+library(plotly)
 #library(read)
 ```
 
@@ -70,7 +71,7 @@ df_metro_coordinates <- data.frame(lat = dfM$y, lng = dfM$x)
 ```{r}
 
 # Create df_cleaned with total_ridership, latbike, and lngbike
-df_cleaned <- df_total_ridership %>%
+df_total_ridership_sum <- df_total_ridership %>%
   group_by(station_id) %>%
   summarise(
     total_ridership = sum(total_ridership),
@@ -80,7 +81,7 @@ df_cleaned <- df_total_ridership %>%
 
 # Add metro station coordinates with swapped column names
 df_cleaned <- merge(
-  df_cleaned,
+  df_total_ridership_sum,
   df_metro_coordinates %>% select(lat, lng) %>% rename(latmetro = lat, lngmetro = lng),
   by = character(),
   all.x = TRUE
@@ -98,11 +99,25 @@ df_cleaned_with_distance <- df_cleaned %>%
 
 ```
 
+```{r}
+#sumarise cleaned_with_distance with the minimum distance to a metro station for each bike station
+df_nearest_metro = df_cleaned_with_distance |>
+  select(station_id, total_ridership, latbike, lngbike, dist_to_metro) |>
+  #group_by(station_id, total_ridership, latbike, lngbike) |>
+  group_by(station_id) |>
+  summarise(min_dist_to_metro = min(dist_to_metro))
+
+#create dataframe that has only one entry for each bike station with the distance to the nearest metro station
+df_bike_stations_nearest_metro = df_total_ridership_sum |>
+  left_join(df_nearest_metro, by = join_by(station_id == station_id))
+```
+
+
 Plotting ridership vs distance to metro:
 ```{r}
 
-ggplot(df_cleaned_with_distance, aes(x = dist_to_metro, y = total_ridership))+
-    geom_point(alpha = 0.05, color = "#074650", size = 0.75) +
+ggplot(df_bike_stations_nearest_metro, aes(x = min_dist_to_metro, y = total_ridership))+
+    geom_point(alpha = 0.5, color = "#074650", size = 0.75) +
     geom_smooth(method = "loess", se = FALSE,
                 color = "limegreen", linewidth = 1.5) +  
   labs(title = "Relationship between Ridership and Distance to Metro",
@@ -110,7 +125,29 @@ ggplot(df_cleaned_with_distance, aes(x = dist_to_metro, y = total_ridership))+
        y = "Total Ridership" ) +
   xlim(0,25) +
   ylim(0,150000)
-  theme_minimal()
+  #theme_minimal()
 
+```
+
+```{r}
+#add enum distance category for stations
+df_bike_stations_nearest_metro = df_bike_stations_nearest_metro |> 
+  mutate(distance_category = case_when(
+    min_dist_to_metro <= 0.1 ~ "<= 0.1 miles",
+    min_dist_to_metro <= 0.5 ~ "<= 0.5 miles",
+    min_dist_to_metro <= 1   ~ "<= 1 miles",
+    min_dist_to_metro <= 5   ~ "<= 5 miles",
+    TRUE                     ~ "> 5 miles",
+  ))
+```
+
+
+plotting ridership and metro locations
+```{r}
+p1 = df_bike_stations_nearest_metro |>
+  ggplot(aes(x = lngbike, y = latbike, color = distance_category)) +
+  geom_point(alpha = 0.5, size = 0.75)
+
+plotly::ggplotly(p1)
 ```
 
