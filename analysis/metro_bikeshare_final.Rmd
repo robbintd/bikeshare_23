@@ -103,7 +103,6 @@ df_cleaned_with_distance <- df_cleaned %>%
 #sumarise cleaned_with_distance with the minimum distance to a metro station for each bike station
 df_nearest_metro = df_cleaned_with_distance |>
   select(station_id, total_ridership, latbike, lngbike, dist_to_metro) |>
-  #group_by(station_id, total_ridership, latbike, lngbike) |>
   group_by(station_id) |>
   summarise(min_dist_to_metro = min(dist_to_metro))
 
@@ -145,8 +144,9 @@ df_bike_stations_nearest_metro = df_bike_stations_nearest_metro |>
 plotting ridership and metro locations
 ```{r}
 p1 = df_bike_stations_nearest_metro |>
-  ggplot(aes(x = lngbike, y = latbike, color = distance_category)) +
-  geom_point(alpha = 0.5, size = 0.75)
+  ggplot(aes(x = lngbike, y = latbike, color = min_dist_to_metro, size = total_ridership)) +
+  scale_color_gradientn(colors = c("darkgreen", "yellow", "red"), trans = "log10") +
+  geom_point(alpha = 0.25)
 
 plotly::ggplotly(p1)
 ```
