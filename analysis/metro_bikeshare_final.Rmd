@@ -157,3 +157,15 @@ p1 = df_bike_stations_nearest_metro |>
 plotly::ggplotly(p1)
 ```
 
+regression model for ridership
+```{r}
+# regression model that uses a linear model on the log of total ridership 
+bike_model <- lm(log(total_ridership) ~ min_dist_to_metro, data = df_bike_stations_nearest_metro)
+```
+
+```{r}
+coef <- coef(bike_model)
+delta_distance <- -1  # Decrease distance to metro station by 1 mile
+percentage_increase <- 100 * (exp(coef["min_dist_to_metro"])^delta_distance - 1)
+cat("Percentage Increase in Ridership per Mile Decrease in Distance to Metro:", percentage_increase, "%")
+```
