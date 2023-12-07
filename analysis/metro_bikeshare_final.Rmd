@@ -151,7 +151,8 @@ p1 = df_bike_stations_nearest_metro |>
   ggplot(aes(x = lngbike, y = latbike, color = min_dist_to_metro, size = total_ridership)) +
   scale_color_gradientn(colors = c("darkgreen", "yellow", "red"), trans = "log10") +
   geom_point(alpha = 0.25) +
-  geom_point(data = df_metro_coordinates, aes(x = lng, y = lat), color = "blue", size = .1) #metro station locations
+  geom_point(data = df_metro_coordinates, aes(x = lng, y = lat), color = "blue", size = .1) + #metro station locations
+  labs(title = "Ridership and Distance to Metro", x = "Latitude", y = "Longitude")
 
 plotly::ggplotly(p1)
 ```
