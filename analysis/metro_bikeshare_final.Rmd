@@ -1,9 +1,14 @@
 ---
 title: "metro_bikeshare_final"
-author: "Nathan Collinsworth, Bryce Butler, Thomas Robbins, Eric Fingar"
+author: "Thomas Robbins, Nathan Collinsworth, Bryce Butler, Eric Fingar"
 date: "2023-12-5"
 output: html_document
 ---
+
+This Rmd is meant to represent the summation of our work on the DS 241 final project, including all manipulation of raw data through polished visualizations and regression modeling. Each team member made many significant updates to this Rmd file, adding to the quality and quantity of results that we were able to produce.
+
+The purpose of our study is to analyze the relationship between metro station access and bikeshare usage in Washington DC in 2023. Specifically, the following code computes the total ridership at each bikeshare station and compares that to the station's proximity to the nearest metro station. Further description of the study's purpose and background as well as its key conclusions and implications is included in the executive summary report PDF that is included in the "reports" folder of this repository.
+
 
 Loading necessary packages for analysis:
 ```{r}
