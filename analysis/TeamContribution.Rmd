@@ -11,6 +11,9 @@ Nathan Collinsworth:
 
 
 Bryce Butler: 
+Added Labels and Metro Station Points to Ridership and Distance to Metro graph
+Removed NA from station_id column in df_bike_stations_nearest_metro
+Added a regression model that calculated the percentage increase in ridership per mile decrease in distance to metro station
 
 
 Thomas Robbins: 
