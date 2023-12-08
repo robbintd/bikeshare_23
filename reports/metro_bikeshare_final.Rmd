@@ -26,6 +26,8 @@ library(plotly)
 ```
 
 Loading 2023 DC ridership data:
+
+https://capitalbikeshare.com/system-data
 ```{r}
 
 thisfile=here("data_raw", "202305-capitalbikeshare-tripdata.zip")
@@ -35,6 +37,8 @@ df1=read_csv(thisfile) %>% clean_names()
 ```
 
 Loading metro station access point data:
+
+https://opendata.dc.gov/datasets/metro-station-entrances-in-dc/explore
 ```{r}
 
 thisfile=here("data_raw","Metro_Station_Entrances_in_DC.csv")
