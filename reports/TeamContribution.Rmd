@@ -8,6 +8,9 @@ output: html_notebook
 This is the team contribution notebook.
 
 Nathan Collinsworth: 
+Filtered the "df_cleaned" dataset created by Eric into a dataframe called "df_bike_stations_nearest_metro" 
+which only has one entry for each bike station with the distance to the nearest metro station.
+Used the "df_bike_stations_nearest_metro" dataframe to create the Ridership and Distance to Metro graph.
 
 
 Bryce Butler: 
