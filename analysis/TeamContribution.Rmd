@@ -1,0 +1,20 @@
+---
+title: "Team Contribution"
+author: "Nathan Collinsworth, Bryce Butler, Thomas Robbins, Eric Fingar"
+date: "2023-12-5"
+output: html_notebook
+---
+
+This is the team contribution notebook.
+
+Nathan Collinsworth: 
+
+
+Bryce Butler: 
+
+
+Thomas Robbins: 
+
+
+Eric Fingar: 
+
