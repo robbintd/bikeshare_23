@@ -5,8 +5,9 @@ date: "2023-12-5"
 output: html_document
 ---
 
-
+Loading necessary packages for analysis:
 ```{r}
+
 library(tidyverse)
 library(janitor)
 library(here)
@@ -16,23 +17,30 @@ library(ggplot2)
 library(geosphere)
 library(plotly)
 #library(read)
+
 ```
 
-
+Loading 2023 DC ridership data:
 ```{r}
+
 thisfile=here("data_raw", "202305-capitalbikeshare-tripdata.zip")
 
 df1=read_csv(thisfile) %>% clean_names()
+
 ```
 
+Loading metro station access point data:
 ```{r}
+
 thisfile=here("data_raw","Metro_Station_Entrances_in_DC.csv")
 
 dfM=read_csv(thisfile) |> clean_names()
+
 ```
 
-
+Combining start and end data for bike stations:
 ```{r}
+
 # Combine start and end data
 df2s <- df1 %>%
   select(rideable_type, member_casual, contains("start"), ride_id) %>% 
@@ -52,6 +60,7 @@ df2 <- bind_rows(df2s, df2e) %>%
 
 ```
 
+Grouping by station ID and location:
 ```{r}
 # Create a dataframe with total ridership, lat, lng for unique station IDs
 df_total_ridership <- df2 %>%
@@ -61,6 +70,7 @@ df_total_ridership <- df2 %>%
 
 ```
 
+Locating metro stations by latitude and longitude:
 ```{r}
 
 # Create a new dataframe with only lat and long columns
@@ -68,6 +78,7 @@ df_metro_coordinates <- data.frame(lat = dfM$y, lng = dfM$x)
 
 ```
 
+Computing the summation of total ridership by station, and cleaning data:
 ```{r}
 
 # Create df_cleaned with total_ridership, latbike, and lngbike
@@ -89,6 +100,7 @@ df_cleaned <- merge(
 
 ```
 
+Creating data frame with a variable quantifying the distance to all metro stations in the area: 
 ```{r}
 # Assuming df_cleaned has the columns "latbike", "lngbike", "latmetro", "lngmetro"
 df_cleaned_with_distance <- df_cleaned %>%
@@ -99,6 +111,7 @@ df_cleaned_with_distance <- df_cleaned %>%
 
 ```
 
+Computing the distance to the nearest metro station for each bikeshare station, and finishing data cleaning:
 ```{r}
 #sumarise cleaned_with_distance with the minimum distance to a metro station for each bike station
 df_nearest_metro = df_cleaned_with_distance |>
@@ -114,8 +127,7 @@ df_bike_stations_nearest_metro = df_total_ridership_sum |>
 df_bike_stations_nearest_metro <- na.omit(df_bike_stations_nearest_metro)
 ```
 
-
-Plotting ridership vs distance to metro:
+Plotting ridership vs distance to the nearest metro station as a standard scatter plot. Note the distinct exponential relationship shown:
 ```{r}
 
 ggplot(df_bike_stations_nearest_metro, aes(x = min_dist_to_metro, y = total_ridership))+
@@ -131,6 +143,7 @@ ggplot(df_bike_stations_nearest_metro, aes(x = min_dist_to_metro, y = total_ride
 
 ```
 
+Creating distance categories for potential categorical visualizations (we ended up using gradient coloration by distance instead):
 ```{r}
 #add enum distance category for stations
 df_bike_stations_nearest_metro = df_bike_stations_nearest_metro |> 
@@ -144,8 +157,7 @@ df_bike_stations_nearest_metro = df_bike_stations_nearest_metro |>
 
 ```
 
-
-plotting ridership and metro locations
+Plotting bike stations relative to metro stations geographically, with weighted buffers based on ridership magnitude, and colored based on the distance to the nearest metro station. Note the distinct increased average ridership volumes in areas with high many metro stations:
 ```{r}
 p1 = df_bike_stations_nearest_metro |>
   ggplot(aes(x = lngbike, y = latbike, color = min_dist_to_metro, size = total_ridership)) +
@@ -157,15 +169,40 @@ p1 = df_bike_stations_nearest_metro |>
 plotly::ggplotly(p1)
 ```
 
-regression model for ridership
+Creating a linear regression model in log space relating distance to the nearest metro station to total ridership:
 ```{r}
 # regression model that uses a linear model on the log of total ridership 
 bike_model <- lm(log(total_ridership) ~ min_dist_to_metro, data = df_bike_stations_nearest_metro)
+
+summary(bike_model)
+
+```
+Visualizing linear regression model in log space:
+```{r}
+
+ggplot(df_bike_stations_nearest_metro, aes(x = min_dist_to_metro, y = log(total_ridership)))+
+    geom_point(alpha = 0.5, color = "#074650", size = 0.75) +
+    geom_smooth(method = "loess", se = FALSE,
+                color = "limegreen", linewidth = 1.5) +
+            geom_abline(aes(intercept = 10.62821,
+                        slope = -0.26607, color = "red"),
+                        linetype = "dashed",linewidth=1.5) +
+  labs(title = "Ridership vs Metro Access: Log Scale Regression",
+       x = "Distance to Metro (miles)",
+       y = "log(Total Ridership)" )# +
+ # xlim(0,25) +
+ # ylim(0,150000)
+  #theme_minimal()
+
 ```
 
+Converting out of log form to understand the percent increase in ridership per unit of distance from the nearest metro station:
 ```{r}
+
 coef <- coef(bike_model)
 delta_distance <- -1  # Decrease distance to metro station by 1 mile
 percentage_increase <- 100 * (exp(coef["min_dist_to_metro"])^delta_distance - 1)
 cat("Percentage Increase in Ridership per Mile Decrease in Distance to Metro:", percentage_increase, "%")
+
 ```
+
